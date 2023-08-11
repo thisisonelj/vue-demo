@@ -22,8 +22,15 @@ export default {
   },
   methods: {
     loginAccount (formData) {
-      accountApi.login(formData).then((res) => {
-        this.errorInfoStatus = res.data
+      this.$axios.post('/rest/account/user/login', formData).then((res) => {
+        this.errorInfoStatus = res.data.data
+        if (res.headers.errorinfo && res.headers.errorinfo === 'token diff') {
+          this.errorInfoStatus = false
+        }
+        if (localStorage && this.errorInfoStatus) {
+          localStorage.setItem('main', this.errorInfoStatus)
+          localStorage.setItem('token', res.headers.token)
+        }
         if (this.errorInfoStatus) {
           this.$router.push('/main').catch((error) => {
             console.log(error)
@@ -40,11 +47,16 @@ export default {
         })
     },
     registAccount (formData) {}
+  },
+  beforeRouteEnter (to, from, next) {
+    history.pushState(null, null, 'http://localhost:8080/login')
+    next()
+  },
+  beforeRouteLeave (to, from, next) {
+    if (localStorage && localStorage.getItem(to.name)) next(true)
+    else next(false)
   }
-  // beforeRouteEnter (to, from, next) {
-  //   if (from.name === 'main') next(false)
-  //   else next()
-  // }
+
 }
 </script>
 <style scoped lang="less">
