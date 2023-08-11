@@ -49,7 +49,7 @@ export default {
     registAccount (formData) {}
   },
   beforeRouteEnter (to, from, next) {
-    history.pushState(null, null, 'http://localhost:8080/login')
+    history.pushState(null, null, 'http://localhost:8082/login')
     next()
   },
   beforeRouteLeave (to, from, next) {
