@@ -60,7 +60,7 @@
 </template>
 <script>
 export default {
-  name: 'userManage',
+  name: 'powerManage',
   data () {
     return {
       userForm: {
