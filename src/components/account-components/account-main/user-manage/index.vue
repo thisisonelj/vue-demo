@@ -45,7 +45,7 @@
               <template slot="suffix">
                 <i
                   class="el-icon-more icon-role"
-                  @click="updateRoleInfo(scope.row)"
+                  @click="updateRoleInfo(scope.$index,scope.row)"
                 ></i>
               </template>
             </el-input>
@@ -183,6 +183,7 @@
         class="role-table"
         highlight-current-row
         border
+        @selection-change="moniterCopySelect"
       >
         <el-table-column type="selection" width="55"> </el-table-column>
         <el-table-column
@@ -251,6 +252,8 @@ export default {
     }
 
     return {
+      updateIndex: 0,
+      addRoleCopyList: [],
       addRoleList: [], // 存储添加用户的角色列表
       dialogRoleCopyVisible: false,
       roleCopyData: [],
@@ -351,7 +354,9 @@ export default {
     /**
      *添加用户的角色列表的选择项
      */
-
+    moniterCopySelect (selection) {
+      this.addRoleCopyList = selection
+    },
     RoleConfirm () {
       this.dialogRoleVisible = false
       let roleNameList = this.addRoleList
@@ -363,11 +368,39 @@ export default {
     },
     RoleCopyConfirm () {
       this.dialogRoleCopyVisible = false
+      let roleNameList = this.addRoleCopyList
+        .map((item) => {
+          return item.roleName
+        })
+        .join(',')
+      this.userData.forEach((element, index, array) => {
+        if (index === this.updateIndex) {
+          element.roleName = roleNameList
+          element.accountRoleDOList = this.addRoleCopyList
+        }
+      })
     },
     insertUser () {
       this.dialogUserVisible = true
     },
-    saveUser () {},
+    saveUser () {
+      userApi.update(this.userData).then((res) => {
+        if (res.status === 200) {
+          this.$message({
+            message: '保存成功',
+            type: 'success'
+          })
+          this.queryUserAll()
+        } else {
+          this.$message({
+            message: '保存失败',
+            type: 'error'
+          })
+        }
+      }).catch((error) => {
+        console.log(error)
+      })
+    },
     btnfunc (btnInfo) {
       if (btnInfo.key === 'insert') {
         this.insertUser()
@@ -376,18 +409,20 @@ export default {
         this.saveUser()
       }
     },
-    handleDelete (index, row) {},
+    handleDelete (index, row) {
+
+    },
     getRoleInfo () {
       this.dialogRoleVisible = true
     },
-    updateRoleInfo (row) {
+    updateRoleInfo (index, row) {
+      this.updateIndex = index
       this.dialogRoleCopyVisible = true
       let that = this
       this.$nextTick(
         this.roleCopyData.forEach((item) => {
           row.accountRoleDOList.forEach((element) => {
             if (item.id === element.id) {
-              console.log(1)
               setTimeout(() => {
                 that.$refs.roleCopyTable.toggleRowSelection(item, true)
               }, 0)
