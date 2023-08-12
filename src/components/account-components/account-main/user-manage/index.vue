@@ -4,7 +4,7 @@
       <el-breadcrumb-item
         v-for="item in btnGroups"
         :key="item.key"
-        @click="btnfunc(item)"
+        @click.native="btnfunc(item)"
         >{{ item.name }}</el-breadcrumb-item
       >
     </el-breadcrumb>
@@ -41,25 +41,256 @@
             >
           </template>
           <template v-else-if="item.key === 'roleName'">
-            <el-input type="text" v-model="scope.row.prop">
+            <el-input type="text" v-model="scope.row[item.key]">
               <template slot="suffix">
-                <i class="el-icon-more icon-role" @click="getRoleInfo"></i>
+                <i
+                  class="el-icon-more icon-role"
+                  @click="updateRoleInfo(scope.row)"
+                ></i>
               </template>
             </el-input>
           </template>
           <template v-else>
-            <el-input type="text" v-model="scope.row.prop"> </el-input>
+            <el-input type="text" v-model="scope.row[item.key]"> </el-input>
           </template>
         </template>
       </el-table-column>
     </el-table>
+    <el-dialog
+      title="增加用户"
+      :visible.sync="dialogUserVisible"
+      center
+      width="420px"
+      class="dialog-user"
+    >
+      <el-form
+        :model="userInsertForm"
+        :inline="false"
+        label-position="right"
+        :rules="userRules"
+        ref="accountUserForm"
+      >
+        <el-form-item
+          label="用户名"
+          :label-width="formLabelWidth"
+          prop="userName"
+        >
+          <el-input
+            v-model="userInsertForm.userName"
+            autocomplete="off"
+          ></el-input>
+        </el-form-item>
+        <el-form-item
+          label="角色名"
+          :label-width="formLabelWidth"
+          prop="roleName"
+        >
+          <el-input type="text" v-model="userInsertForm.roleName">
+            <template slot="suffix">
+              <i class="el-icon-more icon-role" @click="getRoleInfo"></i>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item label="年龄" :label-width="formLabelWidth" prop="age">
+          <el-input-number
+            v-model="userInsertForm.age"
+            :min="0"
+          ></el-input-number>
+        </el-form-item>
+        <el-form-item
+          label="密码"
+          :label-width="formLabelWidth"
+          prop="passWord"
+        >
+          <el-input
+            v-model="userInsertForm.passWord"
+            autocomplete="off"
+            style="margin-left: 13px"
+          ></el-input>
+        </el-form-item>
+        <el-form-item
+          label="创建时间"
+          :label-width="formLabelWidth"
+          prop="createTime"
+          style="text-align: center"
+        >
+          <el-date-picker
+            v-model="userInsertForm.createTime"
+            type="date"
+            placeholder="选择日期"
+            value-format="yyyy-MM-dd HH:hh:ss"
+          >
+          </el-date-picker>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogUserVisible = false">取 消</el-button>
+        <el-button
+          type="primary"
+          @click="userInsert('accountUserForm')"
+          style="margin-left: 20px"
+          >确 定</el-button
+        >
+      </div>
+    </el-dialog>
+    <el-dialog
+      title="角色列表"
+      :visible.sync="dialogRoleVisible"
+      center
+      width="480px"
+      class="dialog-role"
+    >
+      <el-table
+        ref="roleTable"
+        :data="roleData"
+        tooltip-effect="dark"
+        class="role-table"
+        highlight-current-row
+        border
+        @select="selectChange"
+        @selection-change="moniterSelect"
+      >
+        <el-table-column type="selection" width="55"> </el-table-column>
+        <el-table-column
+          v-for="item in roleList"
+          :key="item.key"
+          :type="item.type"
+          :width="item.width"
+          :prop="item.prop"
+          :label="item.label"
+          align="center"
+        >
+        </el-table-column>
+      </el-table>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogRoleVisible = false">取 消</el-button>
+        <el-button type="primary" @click="RoleConfirm" style="margin-left: 20px"
+          >确 定</el-button
+        >
+      </div>
+    </el-dialog>
+    <el-dialog
+      title="角色列表"
+      :visible.sync="dialogRoleCopyVisible"
+      center
+      width="480px"
+      class="dialog-role"
+    >
+      <el-table
+        ref="roleCopyTable"
+        :data="roleCopyData"
+        tooltip-effect="dark"
+        class="role-table"
+        highlight-current-row
+        border
+      >
+        <el-table-column type="selection" width="55"> </el-table-column>
+        <el-table-column
+          v-for="item in roleList"
+          :key="item.key"
+          :type="item.type"
+          :width="item.width"
+          :prop="item.prop"
+          :label="item.label"
+          align="center"
+        >
+        </el-table-column>
+      </el-table>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogRoleCopyVisible = false">取 消</el-button>
+        <el-button
+          type="primary"
+          @click="RoleCopyConfirm"
+          style="margin-left: 20px"
+          >确 定</el-button
+        >
+      </div>
+    </el-dialog>
   </div>
 </template>
 <script>
+import userApi from '../../../../utils/account-user'
+import roleApi from '../../../../utils/account-role'
 export default {
   name: 'userManage',
   data () {
+    let checkUserName = (rule, value, callback) => {
+      if (value === undefined || value === null || value === '') {
+        return callback(new Error('用户名不能为空'))
+      } else {
+        return callback()
+      }
+    }
+    let checkroleName = (rule, value, callback) => {
+      if (value === undefined || value === null || value === '') {
+        return callback(new Error('角色名称不能为空'))
+      } else {
+        return callback()
+      }
+    }
+    let checkAge = (rule, value, callback) => {
+      if (value === undefined || value === null || value === '') {
+        return callback(new Error('年龄不能为空'))
+      } else {
+        return callback()
+      }
+    }
+    let checkPassWord = (rule, value, callback) => {
+      if (value === undefined || value === null || value === '') {
+        return callback(new Error('密码不能为空'))
+      } else {
+        return callback()
+      }
+    }
+    let checkCreateTime = (rule, value, callback) => {
+      if (value === undefined || value === null || value === '') {
+        return callback(new Error('创建时间不能为空'))
+      } else {
+        return callback()
+      }
+    }
+
     return {
+      addRoleList: [], // 存储添加用户的角色列表
+      dialogRoleCopyVisible: false,
+      roleCopyData: [],
+      dialogRoleVisible: false,
+      roleData: [],
+      roleList: [
+        {
+          type: '',
+          width: 180,
+          prop: 'roleName',
+          label: '角色名',
+          key: 'roleName'
+        },
+        {
+          type: '',
+          prop: 'createTime',
+          label: '创建时间',
+          key: 'createTime'
+        }
+      ],
+      userRules: {
+        userName: [{ validator: checkUserName, trigger: 'blur' }],
+        roleName: [{ validator: checkroleName, trigger: 'blur' }],
+        age: [{ validator: checkAge, trigger: 'blur' }],
+        passWord: [{ validator: checkPassWord, trigger: 'blur' }],
+        createTime: [{ validator: checkCreateTime, trigger: 'blur' }]
+      },
+      labelAlign: 'right',
+      formLabelWidth: '55',
+      dialogUserVisible: false,
+      userInsertForm: {
+        userName: '',
+        roleName: '',
+        age: 0,
+        passWord: '',
+        createTime: this.$XeUtils.toDateString(
+          new Date(),
+          'yyyy-MM-dd HH:mm:ss'
+        )
+      },
       userForm: {
         userName: ''
       },
@@ -67,10 +298,6 @@ export default {
         {
           name: '增加',
           key: 'insert'
-        },
-        {
-          name: '修改',
-          key: 'update'
         },
         {
           name: '保存',
@@ -113,23 +340,123 @@ export default {
           key: 'operation'
         }
       ],
-      userData: [
-        {
-          userName: 'liu',
-          roleName: 'liu',
-          age: 24,
-          createTime: new Date()
-        }
-      ]
+      userData: []
     }
   },
   methods: {
-    btnfunc (btnInfo) {},
+    selectChange (selection, row) {},
+    moniterSelect (selection) {
+      this.addRoleList = selection
+    },
+    /**
+     *添加用户的角色列表的选择项
+     */
+
+    RoleConfirm () {
+      this.dialogRoleVisible = false
+      let roleNameList = this.addRoleList
+        .map((item) => {
+          return item.roleName
+        })
+        .join(',')
+      this.userInsertForm.roleName = roleNameList
+    },
+    RoleCopyConfirm () {
+      this.dialogRoleCopyVisible = false
+    },
+    insertUser () {
+      this.dialogUserVisible = true
+    },
+    saveUser () {},
+    btnfunc (btnInfo) {
+      if (btnInfo.key === 'insert') {
+        this.insertUser()
+      }
+      if (btnInfo.key === 'save') {
+        this.saveUser()
+      }
+    },
     handleDelete (index, row) {},
     getRoleInfo () {
-
+      this.dialogRoleVisible = true
+    },
+    updateRoleInfo (row) {
+      this.dialogRoleCopyVisible = true
+      let that = this
+      this.$nextTick(
+        this.roleCopyData.forEach((item) => {
+          row.accountRoleDOList.forEach((element) => {
+            if (item.id === element.id) {
+              console.log(1)
+              setTimeout(() => {
+                that.$refs.roleCopyTable.toggleRowSelection(item, true)
+              }, 0)
+            }
+          })
+        })
+      )
+    },
+    userInsert (accountUserForm) {
+      this.$refs[accountUserForm].validate((valid) => {
+        if (valid) {
+          let insertFinalForm = Object.assign({}, this.userInsertForm)
+          insertFinalForm.accountRoleDOList = this.addRoleList
+          userApi
+            .add(insertFinalForm)
+            .then((res) => {
+              if (res.status === 200) {
+                this.dialogUserVisible = false
+                this.$message({
+                  message: '添加成功',
+                  type: 'success'
+                })
+                this.queryUserAll()
+              } else {
+                this.$message({
+                  message: `${res.msg}`,
+                  type: 'error'
+                })
+              }
+            })
+            .catch((error) => {
+              console.log(error)
+            })
+        } else {
+          this.dialogUserVisible = true
+        }
+      })
+    },
+    queryUserAll () {
+      userApi
+        .queryall({})
+        .then((res) => {
+          if (res.status === 200) {
+            this.userData = res.data
+          }
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    },
+    queryRoleAll () {
+      roleApi
+        .queryall({})
+        .then((res) => {
+          if (res.status === 200) {
+            this.roleData = res.data
+            this.roleCopyData = res.data
+          }
+        })
+        .catch((error) => {
+          console.log(error)
+        })
     }
-  }
+  },
+  created () {
+    this.queryUserAll()
+    this.queryRoleAll()
+  },
+  mounted () {}
 }
 </script>
 <style lang="less" scoped>
@@ -163,6 +490,19 @@ export default {
     width: 100%;
     border: 0.5px solid;
     overflow: auto;
+  }
+  .dialog-user {
+    @{deep} .el-form-item {
+      display: flex;
+      width: auto;
+      .el-form-item__content {
+        width: 80%;
+        .el-input-number {
+          width: 100%;
+          margin-left: 13px;
+        }
+      }
+    }
   }
 }
 </style>

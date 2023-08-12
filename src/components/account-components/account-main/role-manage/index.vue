@@ -103,10 +103,6 @@ export default {
           key: 'insert'
         },
         {
-          name: '修改',
-          key: 'update'
-        },
-        {
           name: '保存',
           key: 'save'
         }
@@ -142,7 +138,7 @@ export default {
     },
     updateRole () {
       this.roleData.forEach(element => {
-        element.disabled = false
+        // element.disabled = false
       })
     },
     saveRole () {
@@ -208,7 +204,7 @@ export default {
           if (res.status === 200) {
             this.roleData = res.data
             this.roleData.forEach(element => {
-              element.disabled = true
+              element.disabled = false
             })
           }
         })
