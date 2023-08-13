@@ -47,18 +47,21 @@
         align="center"
       >
         <template slot-scope="scope">
-          <template v-if="item.key !== 'operation' && item.key !== 'name'">
+          <template v-if="item.key !== 'operation' && item.key !== 'userRoleValue'">
             <el-checkbox
               v-model="scope.row[item.prop]"
               :size="'medium'"
             ></el-checkbox>
           </template>
-          <template v-if="item.key == 'operation'">
+          <template v-else-if="item.key == 'operation'">
             <el-button
               size="mini"
               @click="handleDelete(scope.$index, scope.row)"
               >删除</el-button
             >
+          </template>
+          <template v-else>
+           {{ scope.row[item.prop] }}
           </template>
         </template>
       </el-table-column>
@@ -78,6 +81,7 @@
 <script>
 import userManage from './components/user-manage'
 import roleManage from './components/role-manage'
+import powerApi from '../../../../utils/account-power.js'
 export default {
   name: 'powerManage',
   components: {
@@ -86,6 +90,8 @@ export default {
   },
   data () {
     return {
+      selectedRoles: [],
+      selectedUsers: [],
       roleVisible: false,
       UserVisible: false,
       userForm: {
@@ -96,9 +102,9 @@ export default {
         {
           type: '',
           width: 150,
-          prop: 'name',
+          prop: 'userRoleValue',
           label: '用户/角色',
-          key: 'name'
+          key: 'userRoleValue'
         },
         {
           type: '',
@@ -142,32 +148,7 @@ export default {
           key: 'operation'
         }
       ],
-      powerData: [
-        {
-          name: '1',
-          userManage: true,
-          systemSetting: true,
-          cmManage: true,
-          voucherManage: true,
-          bookManage: true
-        },
-        {
-          name: '1',
-          userManage: true,
-          systemSetting: true,
-          cmManage: true,
-          voucherManage: true,
-          bookManage: true
-        },
-        {
-          name: '1',
-          userManage: true,
-          systemSetting: true,
-          cmManage: true,
-          voucherManage: true,
-          bookManage: true
-        }
-      ]
+      powerData: []
     }
   },
   methods: {
@@ -176,11 +157,75 @@ export default {
     },
     confirmUserDialog (data) {
       this.UserVisible = data.status
+      this.selectedUsers = data.selectedUsers// 存储选中的用户列表
+      this.userForm.user = data.selectedUsers.map((item) => {
+        return item.userName
+      }).join(',')
+      let users = data.selectedUsers
+      let roles = this.selectedRoles
+      let powerRoleList = roles.map((item) => {
+        return { userRoleId: item.id, userRoleValue: item.roleName }
+      })
+      let powerUserList = users.map((e) => {
+        return { userRoleId: e.id, userRoleValue: e.userName }
+      })
+      let powerList = powerRoleList.concat(powerUserList)
+      powerApi.selectList(powerList).then((res) => {
+        if (res.status === 200) {
+          this.powerData = res.data
+        }
+      }).catch((error) => {
+        console.log(error)
+      })
     },
-    handleDelete ($index, row) {},
+    handleDelete ($index, row) {
+      this.$confirm('确定要删除这条数据吗', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        powerApi.delete(row).then((res) => {
+          if (res.status === 200) {
+            this.$message({
+              type: 'success',
+              message: '删除成功!'
+            })
+            this.powerData.splice($index, 1)
+          } else {
+            this.$message({
+              type: 'error',
+              message: '删除失败!'
+            })
+          }
+        })
+      })
+        .catch(() => {
+          this.$message({
+            type: 'info',
+            message: '取消成功'
+          })
+        })
+    },
     selectPower () {},
     cancelContent () {},
-    SavePower () {},
+    SavePower () {
+      powerApi.update(this.powerData).then((res) => {
+        if (res.status === 200) {
+          this.$message({
+            message: '保存成功',
+            type: 'success'
+          })
+          this.powerData = res.data
+        } else {
+          this.$message({
+            message: `${res.message}`,
+            type: 'error'
+          })
+        }
+      }).catch((error) => {
+        console.log(error)
+      })
+    },
     importPower () {},
     exportPower () {},
     updateUserInfo () {
@@ -194,7 +239,39 @@ export default {
     },
     confirmRoleDialog (data) {
       this.roleVisible = false
+      this.selectedRoles = data.selectedRoleList
+      this.userForm.role = data.selectedRoleList.map((item) => {
+        return item.roleName
+      }).join(',')
+      let roles = data.selectedRoleList
+      let users = this.selectedUsers
+      let powerRoleList = roles.map((item) => {
+        return { userRoleId: item.id, userRoleValue: item.roleName }
+      })
+      let powerUserList = users.map((e) => {
+        return { userRoleId: e.id, userRoleValue: e.userName }
+      })
+      let powerList = powerRoleList.concat(powerUserList)
+      powerApi.selectList(powerList).then((res) => {
+        if (res.status === 200) {
+          this.powerData = res.data
+        }
+      }).catch((error) => {
+        console.log(error)
+      })
+    },
+    queryPowerAll () {
+      powerApi.queryall({}).then((res) => {
+        if (res.status === 200) {
+          this.powerData = res.data
+        }
+      }).catch((error) => {
+        console.log(error)
+      })
     }
+  },
+  created () {
+    this.queryPowerAll()
   }
 }
 </script>
@@ -229,6 +306,7 @@ export default {
     width: 100%;
     border: 0.5px solid;
     overflow: auto;
+    height:80%;
   }
 }
 </style>

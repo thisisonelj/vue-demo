@@ -6,6 +6,7 @@
       center
       width="960px"
       class="account-form-inline"
+      :show-close="false"
     >
       <el-form :inline="true" :model="userForm">
         <el-form-item label="用户">
@@ -20,6 +21,7 @@
         highlight-current-row
         border
         :cell-style="cellStyleSet"
+        @selection-change="moniterSelect"
       >
         <el-table-column type="selection" width="55"> </el-table-column>
         <el-table-column
@@ -55,6 +57,7 @@ export default {
   },
   data () {
     return {
+      selectedUserList: [],
       roleCopyData: [],
       userForm: {
         userName: ''
@@ -92,11 +95,14 @@ export default {
     }
   },
   methods: {
+    moniterSelect (data) {
+      this.selectedUserList = data
+    },
     cancelConfirm () {
       this.$emit('cancel-userdialog', { status: false })
     },
     userConfirm () {
-      this.$emit('confirm-userdialog', { status: false })
+      this.$emit('confirm-userdialog', { status: false, selectedUsers: this.selectedUserList })
     },
     /**
      *添加用户的角色列表的选择项

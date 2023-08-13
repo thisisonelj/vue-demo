@@ -13,4 +13,7 @@ powerApi.update = (data) => {
 powerApi.delete = (data) => {
   return http.post('/rest/account/power/delete', data)
 }
+powerApi.selectList = (data) => {
+  return http.post('/rest/account/power/selectlist', data)
+}
 export default powerApi

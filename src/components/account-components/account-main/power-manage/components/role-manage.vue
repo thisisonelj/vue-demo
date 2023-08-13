@@ -5,6 +5,7 @@
     :visible="dialogRoleVisible"
     center
     width="560px"
+    :show-close="false"
   >
     <el-form :model="queryForm" :inline="true">
       <el-form-item label="角色名">
@@ -18,6 +19,7 @@
       class="user-table"
       highlight-current-row
       border
+      @selection-change="moniterSelect"
     >
       <el-table-column type="selection" width="55"> </el-table-column>
       <el-table-column
@@ -51,6 +53,7 @@ export default {
   name: 'roleManage',
   data () {
     return {
+      selectRoleList: [],
       roleForm: {
         roleName: 'system_admin',
         createTime: this.$XeUtils.toDateString(
@@ -80,6 +83,9 @@ export default {
     }
   },
   methods: {
+    moniterSelect (selection) {
+      this.selectRoleList = selection
+    },
     queryAllRole () {
       roleApi
         .queryall(this.roleForm)
@@ -96,7 +102,7 @@ export default {
       this.$emit('cancel-role-confirm', { status: false })
     },
     userConfirm () {
-      this.$emit('user-role-confirm', { status: false })
+      this.$emit('user-role-confirm', { status: false, selectedRoleList: this.selectRoleList })
     }
   },
   created () {
