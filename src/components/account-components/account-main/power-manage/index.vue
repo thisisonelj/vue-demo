@@ -1,18 +1,25 @@
 <template>
   <div class="account-form-inline">
     <el-breadcrumb separator="/" class="account-power-header">
-      <el-breadcrumb-item @click="updatePower">修改</el-breadcrumb-item>
-      <el-breadcrumb-item @click="SavePower">保存</el-breadcrumb-item>
-      <el-breadcrumb-item @click="importPower">导入</el-breadcrumb-item>
-      <el-breadcrumb-item @click="exportPower">导出</el-breadcrumb-item>
+      <el-breadcrumb-item @click.native="SavePower">保存</el-breadcrumb-item>
+      <el-breadcrumb-item @click.native="importPower">导入</el-breadcrumb-item>
+      <el-breadcrumb-item @click.native="exportPower">导出</el-breadcrumb-item>
     </el-breadcrumb>
     <el-divider class="header-divider"></el-divider>
     <el-form :inline="true" :model="userForm">
       <el-form-item label="用户">
-        <el-input v-model="userForm.user" placeholder=""></el-input>
+        <el-input v-model="userForm.user" placeholder="">
+          <template slot="suffix">
+            <i class="el-icon-more icon-role" @click="updateUserInfo()"></i>
+          </template>
+        </el-input>
       </el-form-item>
       <el-form-item label="角色">
-        <el-input v-model="userForm.role" placeholder=""></el-input>
+        <el-input v-model="userForm.role" placeholder="">
+          <template slot="suffix">
+            <i class="el-icon-more icon-role" @click="updateRoleInfo()"></i>
+          </template>
+        </el-input>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="selectPower">查询</el-button>
@@ -56,13 +63,31 @@
         </template>
       </el-table-column>
     </el-table>
+    <user-manage
+      :dialog-user-visible="UserVisible"
+      @cancel-userdialog="cancelUserDialog"
+      @confirm-userdialog="confirmUserDialog"
+    ></user-manage>
+    <role-manage
+      @cancel-role-confirm="cancelRoleDialog"
+      @user-role-confirm="confirmRoleDialog"
+      :dialog-role-visible="roleVisible"
+    ></role-manage>
   </div>
 </template>
 <script>
+import userManage from './components/user-manage'
+import roleManage from './components/role-manage'
 export default {
   name: 'powerManage',
+  components: {
+    userManage: userManage,
+    roleManage: roleManage
+  },
   data () {
     return {
+      roleVisible: false,
+      UserVisible: false,
       userForm: {
         user: '',
         role: ''
@@ -146,13 +171,30 @@ export default {
     }
   },
   methods: {
+    cancelUserDialog (data) {
+      this.UserVisible = data.status
+    },
+    confirmUserDialog (data) {
+      this.UserVisible = data.status
+    },
     handleDelete ($index, row) {},
     selectPower () {},
-    cancelContent () { },
-    updatePower () { },
-    SavePower () { },
+    cancelContent () {},
+    SavePower () {},
     importPower () {},
-    exportPower () {}
+    exportPower () {},
+    updateUserInfo () {
+      this.UserVisible = true
+    },
+    updateRoleInfo () {
+      this.roleVisible = true
+    },
+    cancelRoleDialog (data) {
+      this.roleVisible = false
+    },
+    confirmRoleDialog (data) {
+      this.roleVisible = false
+    }
   }
 }
 </script>
@@ -164,11 +206,11 @@ export default {
   .account-power-header {
     line-height: 2;
     height: 6%;
-    @{deep} .el-breadcrumb__item{
+    @{deep} .el-breadcrumb__item {
       cursor: pointer;
     }
   }
-  .header-divider{
+  .header-divider {
     margin-top: 0px;
   }
   @{deep} .el-form-item:nth-child(1) {

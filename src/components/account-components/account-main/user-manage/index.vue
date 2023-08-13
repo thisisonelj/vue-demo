@@ -45,7 +45,7 @@
               <template slot="suffix">
                 <i
                   class="el-icon-more icon-role"
-                  @click="updateRoleInfo(scope.$index,scope.row)"
+                  @click="updateRoleInfo(scope.$index, scope.row)"
                 ></i>
               </template>
             </el-input>
@@ -177,7 +177,8 @@
       class="dialog-role"
     >
       <el-table
-        ref="roleCopyTable"
+        :key="roleCopyTableValue"
+        :ref="roleCopyTableValue"
         :data="roleCopyData"
         tooltip-effect="dark"
         class="role-table"
@@ -252,6 +253,7 @@ export default {
     }
 
     return {
+      roleCopyTableValue: '',
       updateIndex: 0,
       addRoleCopyList: [],
       addRoleList: [], // 存储添加用户的角色列表
@@ -384,22 +386,25 @@ export default {
       this.dialogUserVisible = true
     },
     saveUser () {
-      userApi.update(this.userData).then((res) => {
-        if (res.status === 200) {
-          this.$message({
-            message: '保存成功',
-            type: 'success'
-          })
-          this.queryUserAll()
-        } else {
-          this.$message({
-            message: '保存失败',
-            type: 'error'
-          })
-        }
-      }).catch((error) => {
-        console.log(error)
-      })
+      userApi
+        .update(this.userData)
+        .then((res) => {
+          if (res.status === 200) {
+            this.$message({
+              message: '保存成功',
+              type: 'success'
+            })
+            this.queryUserAll()
+          } else {
+            this.$message({
+              message: '保存失败',
+              type: 'error'
+            })
+          }
+        })
+        .catch((error) => {
+          console.log(error)
+        })
     },
     btnfunc (btnInfo) {
       if (btnInfo.key === 'insert') {
@@ -410,12 +415,39 @@ export default {
       }
     },
     handleDelete (index, row) {
-
+      this.$confirm('确定要删除这条数据吗', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+        .then(() => {
+          userApi.delete(row).then((res) => {
+            if (res.status === 200) {
+              this.$message({
+                type: 'success',
+                message: '删除成功!'
+              })
+              this.queryUserAll()
+            } else {
+              this.$message({
+                type: 'error',
+                message: '删除失败!'
+              })
+            }
+          })
+        })
+        .catch(() => {
+          this.$message({
+            type: 'info',
+            message: '取消成功'
+          })
+        })
     },
     getRoleInfo () {
       this.dialogRoleVisible = true
     },
     updateRoleInfo (index, row) {
+      this.roleCopyTableValue = row.id
       this.updateIndex = index
       this.dialogRoleCopyVisible = true
       let that = this
@@ -424,7 +456,7 @@ export default {
           row.accountRoleDOList.forEach((element) => {
             if (item.id === element.id) {
               setTimeout(() => {
-                that.$refs.roleCopyTable.toggleRowSelection(item, true)
+                that.$refs[this.roleCopyTableValue].toggleRowSelection(item, true)
               }, 0)
             }
           })
