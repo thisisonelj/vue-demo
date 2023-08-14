@@ -16,4 +16,12 @@ powerApi.delete = (data) => {
 powerApi.selectList = (data) => {
   return http.post('/rest/account/power/selectlist', data)
 }
+powerApi.import = (data) => {
+  return http.post('/rest/account/power/import', data)
+}
+powerApi.export = (data) => {
+  return http.post('/rest/account/power/export', data, {
+    responseType: 'blob'
+  })
+}
 export default powerApi

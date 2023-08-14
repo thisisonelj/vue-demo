@@ -1,33 +1,17 @@
 <template>
   <div class="account-form-inline">
     <el-breadcrumb separator="/" class="account-power-header">
+      <el-breadcrumb-item @click.native="updateUserInfo()"
+        >增加用户</el-breadcrumb-item
+      >
+      <el-breadcrumb-item @click.native="updateRoleInfo()"
+        >增加角色</el-breadcrumb-item
+      >
       <el-breadcrumb-item @click.native="SavePower">保存</el-breadcrumb-item>
       <el-breadcrumb-item @click.native="importPower">导入</el-breadcrumb-item>
       <el-breadcrumb-item @click.native="exportPower">导出</el-breadcrumb-item>
     </el-breadcrumb>
     <el-divider class="header-divider"></el-divider>
-    <el-form :inline="true" :model="userForm">
-      <el-form-item label="用户">
-        <el-input v-model="userForm.user" placeholder="">
-          <template slot="suffix">
-            <i class="el-icon-more icon-role" @click="updateUserInfo()"></i>
-          </template>
-        </el-input>
-      </el-form-item>
-      <el-form-item label="角色">
-        <el-input v-model="userForm.role" placeholder="">
-          <template slot="suffix">
-            <i class="el-icon-more icon-role" @click="updateRoleInfo()"></i>
-          </template>
-        </el-input>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="selectPower">查询</el-button>
-        <el-button @click="cancelContent" style="margin-left: 30px"
-          >清空</el-button
-        >
-      </el-form-item>
-    </el-form>
     <el-table
       ref="powerTable"
       :data="powerData"
@@ -47,7 +31,13 @@
         align="center"
       >
         <template slot-scope="scope">
-          <template v-if="item.key !== 'operation' && item.key !== 'userRoleValue'">
+          <template
+            v-if="
+              item.key !== 'operation' &&
+              item.key !== 'userRoleValue' &&
+              item.key !== 'powerIndex'
+            "
+          >
             <el-checkbox
               v-model="scope.row[item.prop]"
               :size="'medium'"
@@ -60,8 +50,11 @@
               >删除</el-button
             >
           </template>
+          <template v-else-if="item.key == 'powerIndex'">
+            {{ scope.$index + 1 }}
+          </template>
           <template v-else>
-           {{ scope.row[item.prop] }}
+            {{ scope.row[item.prop] }}
           </template>
         </template>
       </el-table-column>
@@ -76,6 +69,49 @@
       @user-role-confirm="confirmRoleDialog"
       :dialog-role-visible="roleVisible"
     ></role-manage>
+    <Modal
+      v-model="displayUpload"
+      width="420"
+      :closable="false"
+      footer-hide
+      class="upload-modal"
+    >
+      <div slot="header">
+        <Icon
+          type="ivu-icon ivu-icon-ios-help-circle"
+          size="28"
+          class="icon-color"
+        />
+        <span class="upload-header-title" style="margin-left: 10px"
+          >提示信息</span
+        >
+      </div>
+      <div style="padding-left: 55px" class="upload-content">
+        <span>导入后用户/角色的权限将被覆盖</span>
+      </div>
+      <div class="upload-footer">
+        <Button type="primary" @click="cancelUpload" ghost>取消</Button>
+        <Upload
+          class="upload-power"
+          :show-upload-list="false"
+          ref="uploadPower"
+          :on-success="handleSuccess"
+          :on-error="handleError"
+          :format="['xlsx', 'xls']"
+          accept="xlsx,xls"
+          :before-upload="handleBeforeUpload"
+          :action="action"
+          :headers="headers"
+        >
+          <Button
+            type="primary"
+            style="margin-left: 10px"
+            @click="confirmUpload"
+            >确定</Button
+          >
+        </Upload>
+      </div>
+    </Modal>
   </div>
 </template>
 <script>
@@ -90,6 +126,10 @@ export default {
   },
   data () {
     return {
+      uploadFile: {},
+      headers: { token: localStorage.getItem('token') },
+      action: this.$axios.defaults.baseURL.concat('/rest/account/power/import'),
+      displayUpload: false,
       selectedRoles: [],
       selectedUsers: [],
       roleVisible: false,
@@ -99,6 +139,13 @@ export default {
         role: ''
       },
       propsList: [
+        {
+          type: '',
+          width: 50,
+          prop: 'powerIndex',
+          label: '序号',
+          key: 'powerIndex'
+        },
         {
           type: '',
           width: 150,
@@ -152,15 +199,52 @@ export default {
     }
   },
   methods: {
+    handleBeforeUpload (file) {
+      const fileExt = file.name.split('.').pop().toLocaleLowerCase()
+      if (fileExt !== 'xlsx' && fileExt !== 'xls') {
+        this.$Message.error('格式必须为xlsx、xls类型')
+        return false
+      } else {
+        this.uploadFile = file
+        return true
+      }
+    },
+    handleError (response) {},
+    handleSuccess (response) {
+      if (response.status === 200) {
+        this.$message({
+          type: 'success',
+          message: '导入成功'
+        })
+        this.powerData = response.data
+      } else {
+        this.$message({
+          type: 'error',
+          message: '导入失败'
+        })
+      }
+    },
+    confirmUpload () {
+      if (Object.keys(this.uploadFile).length !== 0) {
+        let uploadFile = this.uploadFile
+        this.$refs.uploadPower.post(uploadFile)
+      }
+      this.displayUpload = false
+    },
+    cancelUpload () {
+      this.displayUpload = false
+    },
     cancelUserDialog (data) {
       this.UserVisible = data.status
     },
     confirmUserDialog (data) {
       this.UserVisible = data.status
-      this.selectedUsers = data.selectedUsers// 存储选中的用户列表
-      this.userForm.user = data.selectedUsers.map((item) => {
-        return item.userName
-      }).join(',')
+      this.selectedUsers = data.selectedUsers // 存储选中的用户列表
+      this.userForm.user = data.selectedUsers
+        .map((item) => {
+          return item.userName
+        })
+        .join(',')
       let users = data.selectedUsers
       let roles = this.selectedRoles
       let powerRoleList = roles.map((item) => {
@@ -170,35 +254,39 @@ export default {
         return { userRoleId: e.id, userRoleValue: e.userName }
       })
       let powerList = powerRoleList.concat(powerUserList)
-      powerApi.selectList(powerList).then((res) => {
-        if (res.status === 200) {
-          this.powerData = res.data
-        }
-      }).catch((error) => {
-        console.log(error)
-      })
+      powerApi
+        .selectList(powerList)
+        .then((res) => {
+          if (res.status === 200) {
+            this.powerData = res.data
+          }
+        })
+        .catch((error) => {
+          console.log(error)
+        })
     },
     handleDelete ($index, row) {
       this.$confirm('确定要删除这条数据吗', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-      }).then(() => {
-        powerApi.delete(row).then((res) => {
-          if (res.status === 200) {
-            this.$message({
-              type: 'success',
-              message: '删除成功!'
-            })
-            this.powerData.splice($index, 1)
-          } else {
-            this.$message({
-              type: 'error',
-              message: '删除失败!'
-            })
-          }
-        })
       })
+        .then(() => {
+          powerApi.delete(row).then((res) => {
+            if (res.status === 200) {
+              this.$message({
+                type: 'success',
+                message: '删除成功!'
+              })
+              this.powerData.splice($index, 1)
+            } else {
+              this.$message({
+                type: 'error',
+                message: '删除失败!'
+              })
+            }
+          })
+        })
         .catch(() => {
           this.$message({
             type: 'info',
@@ -209,25 +297,62 @@ export default {
     selectPower () {},
     cancelContent () {},
     SavePower () {
-      powerApi.update(this.powerData).then((res) => {
-        if (res.status === 200) {
-          this.$message({
-            message: '保存成功',
-            type: 'success'
-          })
-          this.powerData = res.data
-        } else {
-          this.$message({
-            message: `${res.message}`,
-            type: 'error'
-          })
-        }
-      }).catch((error) => {
-        console.log(error)
-      })
+      powerApi
+        .update(this.powerData)
+        .then((res) => {
+          if (res.status === 200) {
+            this.$message({
+              message: '保存成功',
+              type: 'success'
+            })
+            this.powerData = res.data
+          } else {
+            this.$message({
+              message: `${res.message}`,
+              type: 'error'
+            })
+          }
+        })
+        .catch((error) => {
+          console.log(error)
+        })
     },
-    importPower () {},
-    exportPower () {},
+    importPower () {
+      this.displayUpload = true
+    },
+    exportPower () {
+      let selectedDatas = this.$refs.powerTable.selection
+      if (selectedDatas.length === 0) {
+        this.$Message.info('请至少选择一条数据')
+      } else {
+        this.$axios
+          .post(
+            '/rest/account/power/export',
+            JSON.stringify(selectedDatas),
+            {
+              responseType: 'blob'
+            }
+          )
+          .then((res) => {
+            let blob = new Blob([res.data], {
+              type: 'application/ms-excel;charset=utf-8'
+            })
+            let downloadElement = document.createElement('a')
+            let href = window.URL.createObjectURL(blob) // 创建下载的链接
+            downloadElement.href = href
+            let temp = res.headers['content-disposition'].slice(9)
+            // 对文件名乱码转义--【Node.js】使用iconv-lite解决中文乱码
+            let iconv = require('iconv-lite')
+            iconv.skipDecodeWarning = true // 忽略警告
+            let fileName = iconv.decode(temp, 'utf-8')
+            downloadElement.download = fileName
+            document.body.appendChild(downloadElement)
+            downloadElement.click() // 点击下载
+            document.body.removeChild(downloadElement) // 下载完成移除元素
+            window.URL.revokeObjectURL(href) // 释放掉blob对象
+          })
+      }
+    },
     updateUserInfo () {
       this.UserVisible = true
     },
@@ -240,9 +365,11 @@ export default {
     confirmRoleDialog (data) {
       this.roleVisible = false
       this.selectedRoles = data.selectedRoleList
-      this.userForm.role = data.selectedRoleList.map((item) => {
-        return item.roleName
-      }).join(',')
+      this.userForm.role = data.selectedRoleList
+        .map((item) => {
+          return item.roleName
+        })
+        .join(',')
       let roles = data.selectedRoleList
       let users = this.selectedUsers
       let powerRoleList = roles.map((item) => {
@@ -252,22 +379,28 @@ export default {
         return { userRoleId: e.id, userRoleValue: e.userName }
       })
       let powerList = powerRoleList.concat(powerUserList)
-      powerApi.selectList(powerList).then((res) => {
-        if (res.status === 200) {
-          this.powerData = res.data
-        }
-      }).catch((error) => {
-        console.log(error)
-      })
+      powerApi
+        .selectList(powerList)
+        .then((res) => {
+          if (res.status === 200) {
+            this.powerData = res.data
+          }
+        })
+        .catch((error) => {
+          console.log(error)
+        })
     },
     queryPowerAll () {
-      powerApi.queryall({}).then((res) => {
-        if (res.status === 200) {
-          this.powerData = res.data
-        }
-      }).catch((error) => {
-        console.log(error)
-      })
+      powerApi
+        .queryall({})
+        .then((res) => {
+          if (res.status === 200) {
+            this.powerData = res.data
+          }
+        })
+        .catch((error) => {
+          console.log(error)
+        })
     }
   },
   created () {
@@ -281,8 +414,8 @@ export default {
   height: 100%;
   padding: 10px;
   .account-power-header {
-    line-height: 2;
-    height: 6%;
+    line-height: 1.5;
+    height: 2%;
     @{deep} .el-breadcrumb__item {
       cursor: pointer;
     }
@@ -290,23 +423,43 @@ export default {
   .header-divider {
     margin-top: 0px;
   }
-  @{deep} .el-form-item:nth-child(1) {
-    width: 40%;
-    .el-form-item__content {
-      width: 80%;
-    }
-  }
-  @{deep} .el-form-item:nth-child(2) {
-    width: 40%;
-    .el-form-item__content {
-      width: 80%;
-    }
+  @{deep} .el-divider--horizontal {
+    margin: 13px 0;
   }
   .account-table {
     width: 100%;
     border: 0.5px solid;
     overflow: auto;
-    height:80%;
+    height: 94%;
+  }
+}
+</style>
+<style lang="less">
+@deep:~ ">>>";
+.upload-modal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  .ivu-modal {
+    top: 30%;
+  }
+  .ivu-modal-header {
+    border-bottom: 0px;
+    .icon-color {
+      color: #f90;
+    }
+    .upload-header-title {
+      font-size: 18px;
+      vertical-align: 2px;
+    }
+  }
+  .upload-content {
+    font-size: 16px;
+  }
+  .upload-footer {
+    display: flex;
+    margin-top: 10%;
+    justify-content: end;
   }
 }
 </style>

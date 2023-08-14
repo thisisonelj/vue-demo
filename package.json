@@ -27,6 +27,7 @@
     "element-ui": "^2.15.9",
     "eslint": "^7.32.0",
     "eslint-plugin-vue": "^7.0.0",
+    "iconv-lite": "^0.6.3",
     "iview": "^3.5.4",
     "less": "^3.13.1",
     "less-loader": "^11.1.0",
