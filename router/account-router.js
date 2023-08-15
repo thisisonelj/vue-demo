@@ -11,6 +11,10 @@ import cmManage from '../src/components/account-components/account-main/cm-manag
 import voucherImport from '../src/components/account-components/account-main/voucher-import'
 import voucherManage from '../src/components/account-components/account-main/voucher-manage'
 import systemManage from '../src/components/account-components/account-main/system-manage'
+import orgAssist from '../src/components/account-components/account-main/assist-manage/org-assist.vue'
+import bankAssist from '../src/components/account-components/account-main/assist-manage/bank-account-assist.vue'
+import currencyAssist from '../src/components/account-components/account-main/assist-manage/currency-assist.vue'
+
 export default {
   accountEntry: accountEntry,
   accountMain: accountMain,
@@ -24,5 +28,8 @@ export default {
   cmManage: cmManage,
   voucherImport: voucherImport,
   voucherManage: voucherManage,
-  systemManage: systemManage
+  systemManage: systemManage,
+  orgAssist: orgAssist,
+  currencyAssist: currencyAssist,
+  bankAssist: bankAssist
 }

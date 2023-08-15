@@ -8,22 +8,28 @@
         :default-active="$route.path"
         router
       >
-        <el-submenu index="1">
-          <template slot="title"><i class="el-icon-user"></i>用户管理</template>
+      <el-submenu index="1">
+          <template slot="title"
+            ><i class="el-icon-s-tools"></i>辅助项管理</template
+          >
           <el-menu-item-group>
-            <el-menu-item index="/user"
-              ><span><i class="el-icon-user"></i>用户信息</span></el-menu-item
+            <el-menu-item index="/org"
+              ><span
+                ><i class="el-icon-setting"></i>组织机构</span
+              ></el-menu-item
             >
           </el-menu-item-group>
           <el-menu-item-group>
-            <el-menu-item index="/role"
-              ><span><i class="el-icon-user-solid"></i>角色信息</span>
-            </el-menu-item>
+            <el-menu-item index="/bank"
+              ><span
+                ><i class="el-icon-setting"></i>银行账户</span
+              ></el-menu-item
+            >
           </el-menu-item-group>
           <el-menu-item-group>
-            <el-menu-item index="/power">
-              <span
-                ><i class="el-icon-coordinate"></i>权限信息</span
+            <el-menu-item index="/currency"
+              ><span
+                ><i class="el-icon-setting"></i>币别</span
               ></el-menu-item
             >
           </el-menu-item-group>
@@ -85,6 +91,26 @@
             <el-menu-item index="/balance-book"
               ><span
                 ><i class="el-icon-suitcase-1"></i>余额账</span
+              ></el-menu-item
+            >
+          </el-menu-item-group>
+        </el-submenu>
+        <el-submenu index="6">
+          <template slot="title"><i class="el-icon-user"></i>用户管理</template>
+          <el-menu-item-group>
+            <el-menu-item index="/user"
+              ><span><i class="el-icon-user"></i>用户信息</span></el-menu-item
+            >
+          </el-menu-item-group>
+          <el-menu-item-group>
+            <el-menu-item index="/role"
+              ><span><i class="el-icon-user-solid"></i>角色信息</span>
+            </el-menu-item>
+          </el-menu-item-group>
+          <el-menu-item-group>
+            <el-menu-item index="/power">
+              <span
+                ><i class="el-icon-coordinate"></i>权限信息</span
               ></el-menu-item
             >
           </el-menu-item-group>

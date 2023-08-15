@@ -74,6 +74,24 @@ const router = new Router({
           name: 'balanceBook',
           component: account.balanceBook,
           meta: { headerTitle: '余额账' }
+        },
+        {
+          path: '/org',
+          name: 'orgAssist',
+          component: account.orgAssist,
+          meta: { headerTitle: '组织机构' }
+        },
+        {
+          path: '/bank',
+          name: 'bankAccountAssist',
+          component: account.bankAssist,
+          meta: { headerTitle: '银行账户' }
+        },
+        {
+          path: '/currency',
+          name: 'currencyAssist',
+          component: account.currencyAssist,
+          meta: { headerTitle: '币别' }
         }
       ]
     },
@@ -136,6 +154,24 @@ const router = new Router({
       name: 'balanceBook',
       component: account.balanceBook,
       meta: { headerTitle: '余额账' }
+    },
+    {
+      path: '/org',
+      name: 'orgAssist',
+      component: account.orgAssist,
+      meta: { headerTitle: '组织机构' }
+    },
+    {
+      path: '/bank',
+      name: 'bankAccountAssist',
+      component: account.bankAssist,
+      meta: { headerTitle: '银行账户' }
+    },
+    {
+      path: '/currency',
+      name: 'currencyAssist',
+      component: account.currencyAssist,
+      meta: { headerTitle: '币别' }
     }
   ]
 })
